@@ -1,18 +1,13 @@
-//
-//  ALApp.swift
-//  AL
-//
-//  Created by Divyanshu Sharma on 11/20/25.
-//
-
 import SwiftUI
 import SwiftData
 
 @main
 struct ALApp: App {
+    // Initialize the Database
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Incident.self,
+            Recording.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,7 +20,7 @@ struct ALApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView() // Point to our new Home
         }
         .modelContainer(sharedModelContainer)
     }
