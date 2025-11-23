@@ -3,25 +3,30 @@ import SwiftData
 
 @main
 struct ALApp: App {
-    // Initialize the Database
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Incident.self,
-            Recording.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+    // Initialize the database
+    let container: ModelContainer
+    
+    init() {
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            // Ensure these match the models in UserModels.swift
+            let schema = Schema([
+                Recording.self,
+                Incident.self
+            ])
+            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            
+            container = try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
-    }()
-
+    }
+    
     var body: some Scene {
         WindowGroup {
-            HomeView() // Point to our new Home
+            // --- THE FIX: Change LocationsView() to HomeView() ---
+            HomeView()
+                .preferredColorScheme(.dark) // Force Dark Mode for the premium look
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(container) // Inject the database
     }
 }

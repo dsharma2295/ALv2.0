@@ -2,208 +2,93 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
-    // --- Database & ViewModel ---
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var audioVM = AudioRecorderViewModel()
+    @StateObject private var audioVM = AudioRecorderViewModel.shared
     
-    // --- Navigation State ---
-    @State private var navigateToRecorder = false // Auto-nav after recording
-    @State private var navigateToLog = false      // Manual nav to log
+    // Navigation State
+    @State private var selectedIndex = 0
+    @State private var showSOSAlert = false
+    @State private var navigateToLocations = false
+    @State private var navigateToHistory = false
+    @State private var showLoggerSheet = false
     
-    // Data for the carousel
-    let menuItems = [
-        MenuItem(id: "rights", title: "Where Are You?", icon: "location.fill", color: .blue),
-        MenuItem(id: "incident", title: "Log Incident", icon: "doc.text.fill", color: .green),
-        MenuItem(id: "bookmarks", title: "Saved Items", icon: "bookmark.fill", color: .orange)
+    // Carousel Data
+    let carouselItems: [CarouselItem] = [
+        CarouselItem(
+            id: "location",
+            title: "Where are you?",
+            subtitle: "Identify your situation",
+            icon: "map.fill",
+            color: .blue,
+            action: .navigate
+        ),
+        CarouselItem(
+            id: "log",
+            title: "Log Incident",
+            subtitle: "Document violation",
+            icon: "square.and.pencil",
+            color: .green,
+            action: .sheet
+        ),
+        CarouselItem(
+            id: "history",
+            title: "History",
+            subtitle: "Past Reports & Logs",
+            icon: "archivebox.fill",
+            color: .purple,
+            action: .navigate
+        )
     ]
     
     var body: some View {
         NavigationStack {
             ZStack {
-                // 1. Deep Black Background
-                Color.black.ignoresSafeArea()
+                // 1. Background
+                AuroraBackground()
                 
                 VStack(spacing: 0) {
                     // 2. Header
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("AL")
-                                .font(.system(size: 34, weight: .heavy))
-                                .engraved()
-                            Text("LEGAL ASSISTANT")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.gray)
-                                .tracking(2)
-                        }
-                        Spacer()
-                        Button(action: { /* Open Settings */ }) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.title2)
-                                .foregroundStyle(Color(white: 0.3))
-                                .padding(10)
-                                .background(Color(white: 0.1))
-                                .clipShape(Circle())
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 20)
+                    HomeHeaderView()
                     
                     Spacer()
                     
-                    // 3. The 3D Carousel
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 0) {
-                            ForEach(menuItems) { item in
-                                NavigationLink(value: item) {
-                                    MenuCard(item: item)
-                                        .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
-                                        .scrollTransition { content, phase in
-                                            content
-                                                .scaleEffect(phase.isIdentity ? 1.0 : 0.85)
-                                                .opacity(phase.isIdentity ? 1.0 : 0.6)
-                                                .blur(radius: phase.isIdentity ? 0 : 2)
-                                        }
-                                }
-                            }
-                        }
-                        .scrollTargetLayout()
+                    // 3. Carousel
+                    CarouselView(selectedIndex: $selectedIndex, items: carouselItems) { item in
+                        handleCarouselTap(item)
                     }
-                    .contentMargins(.horizontal, 40, for: .scrollContent)
-                    .scrollTargetBehavior(.viewAligned)
-                    .frame(height: 400)
                     
-                    // --- Navigation Handling ---
-                    .navigationDestination(for: MenuItem.self) { item in
-                        if item.id == "incident" {
-                            IncidentLoggerView()
-                        } else if item.id == "rights" {
-                            RightsListView()
-                        } else {
-                            ContentUnavailableView("Coming Soon", systemImage: "clock", description: Text("This feature is under development."))
-                        }
-                    }
-                    .navigationDestination(isPresented: $navigateToRecorder) {
-                        AudioRecorderView()
-                    }
-                    .navigationDestination(isPresented: $navigateToLog) {
-                        AudioRecorderView()
-                    }
+                    // 4. Page Indicator
+                    PageIndicatorView(selectedIndex: selectedIndex, count: carouselItems.count)
+                        .padding(.bottom, 40)
                     
                     Spacer()
                     
-                    // 4. Split Action Bar
-                    HStack(spacing: 16) {
-                        
-                        // === SPLIT RECORD BUTTON ===
-                        HStack(spacing: 0) {
-                            // A. Record/Stop Zone
-                            Button(action: handleRecordButtonTap) {
-                                HStack {
-                                    if audioVM.isRecording {
-                                        HStack(spacing: 3) {
-                                            ForEach(0..<12, id: \.self) { index in
-                                                RoundedRectangle(cornerRadius: 2)
-                                                    .fill(Color.white)
-                                                    .frame(width: 3, height: CGFloat(audioVM.audioLevels[index] * 1.5 + 5))
-                                                    .animation(.easeOut(duration: 0.1), value: audioVM.audioLevels)
-                                            }
-                                        }
-                                        .frame(width: 60)
-                                        
-                                        Text("STOP")
-                                            .font(.headline)
-                                            .fontWeight(.black)
-                                            .foregroundStyle(.white)
-                                            .padding(.leading, 8)
-                                        
-                                    } else if audioVM.hasJustFinished {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .font(.title2)
-                                            .foregroundStyle(.white)
-                                        Text("SAVED")
-                                            .font(.headline)
-                                            .fontWeight(.bold)
-                                            .foregroundStyle(.white)
-                                            .padding(.leading, 4)
-                                        
-                                    } else {
-                                        Image(systemName: "mic.fill")
-                                            .font(.title2)
-                                            .foregroundStyle(.white)
-                                        VStack(alignment: .leading) {
-                                            Text("Record")
-                                                .font(.headline)
-                                                .fontWeight(.bold)
-                                                .foregroundStyle(.white)
-                                            Text("Evidence")
-                                                .font(.caption2)
-                                                .foregroundStyle(.white.opacity(0.7))
-                                        }
-                                        .padding(.leading, 4)
-                                    }
-                                    
-                                    Spacer()
-                                }
-                                .padding(.leading, 20)
-                                .frame(maxHeight: .infinity)
-                            }
-                            
-                            // Vertical Divider
-                            Rectangle()
-                                .fill(Color.black.opacity(0.2))
-                                .frame(width: 1)
-                                .padding(.vertical, 12)
-                            
-                            // B. Log Access Zone
-                            Button(action: {
-                                let generator = UIImpactFeedbackGenerator(style: .light)
-                                generator.impactOccurred()
-                                navigateToLog = true
-                            }) {
-                                ZStack {
-                                    Color.black.opacity(0.001) // Hit box
-                                    Image(systemName: "list.bullet.circle.fill")
-                                        .font(.title2)
-                                        .foregroundStyle(.white.opacity(0.9))
-                                }
-                                .frame(width: 60, height: 76)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 76)
-                        .background(
-                            audioVM.isRecording ? Color.red.gradient :
-                            (audioVM.hasJustFinished ? Color.green.gradient : Color.red.gradient)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                        .shadow(color: audioVM.isRecording ? .red.opacity(0.5) : .red.opacity(0.3), radius: 10, y: 5)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24)
-                                .stroke(.white.opacity(0.15), lineWidth: 1)
-                        )
-                        
-                        // SOS Button
-                        Button(action: {
-                            // Trigger SOS
-                        }) {
-                            VStack(spacing: 2) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.title2)
-                                Text("SOS").font(.caption2).fontWeight(.black)
-                            }
-                            .frame(width: 76, height: 76)
-                            .background(Color(white: 0.15))
-                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 24).stroke(.white.opacity(0.1), lineWidth: 1)
-                            )
-                        }
-                        .buttonStyle(BouncyButtonStyle())
-                    }
+                    // 5. Bottom Control Bar
+                    BottomControlBar(
+                        audioVM: audioVM,
+                        onSOSTap: triggerSOS,
+                        onRecordTap: toggleRecording
+                    )
                     .padding(.horizontal, 24)
                     .padding(.bottom, 20)
                 }
+            }
+            // --- Navigation Links ---
+            .navigationDestination(isPresented: $navigateToLocations) {
+                LocationsView()
+            }
+            .navigationDestination(isPresented: $navigateToHistory) {
+                IncidentHistoryView()
+            }
+            // --- Sheets ---
+            .sheet(isPresented: $showLoggerSheet) {
+                IncidentLoggerView()
+            }
+            // --- Alerts ---
+            .alert("SOS TRIGGERED", isPresented: $showSOSAlert) {
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Emergency contacts have been notified (Simulation).")
             }
         }
         .onAppear {
@@ -211,53 +96,353 @@ struct HomeView: View {
         }
     }
     
-    // Logic for the main record button
-    private func handleRecordButtonTap() {
+    // MARK: - Actions
+    
+    func handleCarouselTap(_ item: CarouselItem) {
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        switch item.id {
+        case "location":
+            navigateToLocations = true
+        case "log":
+            showLoggerSheet = true
+        case "history":
+            navigateToHistory = true
+        default:
+            break
+        }
+    }
+    
+    func triggerSOS() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.error)
+        showSOSAlert = true
+    }
+    
+    func toggleRecording() {
+        let generator = UIImpactFeedbackGenerator(style: .heavy)
+        generator.impactOccurred()
+        
         if audioVM.isRecording {
             audioVM.stopRecording()
-        } else if audioVM.hasJustFinished {
-            navigateToRecorder = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                audioVM.hasJustFinished = false
-            }
         } else {
             audioVM.startRecording()
         }
     }
 }
 
-// --- Subcomponents ---
+// MARK: - Subviews
 
-struct MenuCard: View {
-    let item: MenuItem
-    
+struct HomeHeaderView: View {
     var body: some View {
-        VStack(spacing: 30) {
-            Image(systemName: item.icon)
-                .font(.system(size: 80))
-                .foregroundStyle(item.color.gradient)
-                .shadow(color: item.color.opacity(0.5), radius: 20)
+        HStack {
+            VStack(alignment: .leading) {
+                Text(Date().formatted(date: .complete, time: .omitted).uppercased())
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .tracking(1)
+                
+                Text("AL")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+            }
+            Spacer()
             
-            Text(item.title)
-                .font(.title.bold())
-                .engraved()
-                .multilineTextAlignment(.center)
+            NavigationLink(destination: Text("Settings")) {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 20))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .padding(10)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Circle())
+            }
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 380)
-        .metallic()
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 24)
+        .padding(.top, 20)
     }
 }
 
-struct MenuItem: Identifiable, Hashable {
-    var id: String
-    var title: String
-    var icon: String
-    var color: Color
+struct CarouselView: View {
+    @Binding var selectedIndex: Int
+    let items: [CarouselItem]
+    let tapAction: (CarouselItem) -> Void
+    
+    var body: some View {
+        TabView(selection: $selectedIndex) {
+            ForEach(0..<items.count, id: \.self) { index in
+                Button(action: { tapAction(items[index]) }) {
+                    HeroCard(item: items[index])
+                }
+                .tag(index)
+            }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .frame(height: 420)
+        .padding(.bottom, 20)
+    }
+}
+
+struct PageIndicatorView: View {
+    let selectedIndex: Int
+    let count: Int
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<count, id: \.self) { index in
+                Capsule()
+                    .fill(Color.white.opacity(selectedIndex == index ? 1 : 0.2))
+                    .frame(width: selectedIndex == index ? 20 : 8, height: 8)
+                    .animation(.spring(), value: selectedIndex)
+            }
+        }
+    }
+}
+
+struct BottomControlBar: View {
+    @ObservedObject var audioVM: AudioRecorderViewModel
+    let onSOSTap: () -> Void
+    let onRecordTap: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // SOS Button
+            Button(action: onSOSTap) {
+                ZStack {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
+                    
+                    VStack(spacing: 2) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 22))
+                        Text("SOS")
+                            .font(.system(size: 10, weight: .black))
+                    }
+                    .foregroundStyle(Color.red.gradient)
+                }
+                .frame(width: 72, height: 72)
+                .overlay(Circle().stroke(Color.red.opacity(0.3), lineWidth: 1))
+            }
+            
+            // Record Pill
+            RecordControlPill(audioVM: audioVM, onRecordTap: onRecordTap)
+            
+            // Bookmarks Button
+            NavigationLink(destination: BookmarksView()) {
+                ZStack {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
+                    
+                    VStack(spacing: 2) {
+                        Image(systemName: "bookmark.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(.white)
+                        Text("SAVED")
+                            .font(.system(size: 10, weight: .black))
+                            .foregroundStyle(.white)
+                    }
+                }
+                .frame(width: 72, height: 72)
+                .overlay(Circle().stroke(Color.orange.opacity(0.3), lineWidth: 1))
+            }
+        }
+    }
+}
+
+struct RecordControlPill: View {
+    @ObservedObject var audioVM: AudioRecorderViewModel
+    let onRecordTap: () -> Void
+    @State private var pulse = false // Local state for pulsing animation
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            // Record Action
+            Button(action: onRecordTap) {
+                HStack {
+                    if audioVM.isRecording {
+                        // Active State: Waveform
+                        HStack(spacing: 3) {
+                            ForEach(0..<6, id: \.self) { index in
+                                let levelIndex = index % audioVM.audioLevels.count
+                                let height = audioVM.audioLevels[levelIndex] * 1.5 + 5
+                                
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(Color.white)
+                                    .frame(width: 4, height: height)
+                                    .animation(.easeInOut(duration: 0.1), value: height)
+                            }
+                        }
+                        .frame(width: 50)
+                        
+                        Text(formatDuration(audioVM.recordingTime))
+                            .font(.system(.headline, design: .monospaced))
+                            .foregroundStyle(.white)
+                            .frame(width: 60)
+                        
+                    } else {
+                        // Idle State
+                        Image(systemName: "mic.fill")
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                            .padding(.leading, 14) // Adjusted padding
+                        
+                        Text("Record")
+                            .font(.system(.headline, design: .rounded))
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .padding(.leading, 4)
+                            .lineLimit(1)            // Fix: Prevent wrapping
+                            .minimumScaleFactor(0.8) // Fix: Allow slight shrink
+                    }
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 72)
+                // FIX: Use AnyShapeStyle to handle mismatched types
+                .background(
+                    audioVM.isRecording
+                        ? AnyShapeStyle(Color.black.opacity(0.8))
+                        : AnyShapeStyle(Color.red.gradient)
+                )
+            }
+            
+            // Separator
+            Rectangle()
+                .fill(Color.white.opacity(0.2))
+                .frame(width: 1, height: 40)
+            
+            // Log Access
+            NavigationLink(destination: AudioRecorderView()) {
+                VStack(spacing: 2) {
+                    Image(systemName: "waveform.path.ecg")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.white.opacity(0.9))
+                    Text("Log")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                .frame(width: 64, height: 72)
+                .background(
+                    audioVM.isRecording
+                        ? AnyShapeStyle(Color.black.opacity(0.8))
+                        : AnyShapeStyle(Color.red.gradient)
+                )
+            }
+        }
+        .clipShape(Capsule())
+        .overlay(
+            Capsule()
+                .stroke(audioVM.isRecording ? Color.red : Color.white.opacity(0.15), lineWidth: 1)
+        )
+        // Pulsating Ring Effect
+        .overlay(
+            Group {
+                if audioVM.isRecording {
+                    Capsule()
+                        .stroke(Color.red.opacity(0.5), lineWidth: 4)
+                        .scaleEffect(pulse ? 1.1 : 1.0)
+                        .opacity(pulse ? 0.0 : 1.0)
+                        .onAppear {
+                            withAnimation(.easeOut(duration: 1.5).repeatForever(autoreverses: false)) {
+                                pulse = true
+                            }
+                        }
+                }
+            }
+        )
+        .shadow(color: audioVM.isRecording ? .red.opacity(0.5) : .red.opacity(0.4), radius: 15, y: 5)
+    }
+    
+    func formatDuration(_ duration: TimeInterval) -> String {
+        let mins = Int(duration) / 60
+        let secs = Int(duration) % 60
+        return String(format: "%02d:%02d", mins, secs)
+    }
+}
+
+// MARK: - Subcomponents (Data Models)
+
+struct CarouselItem: Identifiable, Hashable {
+    enum ActionType { case navigate, sheet }
+    let id: String
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    let action: ActionType
+}
+
+struct HeroCard: View {
+    let item: CarouselItem
+    
+    var body: some View {
+        ZStack {
+            // Glass Background
+            RoundedRectangle(cornerRadius: 40, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.4), radius: 30, x: 0, y: 15)
+            
+            // Content
+            VStack(spacing: 30) {
+                // Floating Icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [item.color.opacity(0.2), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .frame(width: 140, height: 140)
+                        .blur(radius: 20)
+                    
+                    Image(systemName: item.icon)
+                        .font(.system(size: 80))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.white, item.color],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: item.color.opacity(0.5), radius: 15)
+                }
+                
+                // Text
+                VStack(spacing: 12) {
+                    Text(item.title)
+                        .font(.system(size: 32, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                    
+                    Text(item.subtitle.uppercased())
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white.opacity(0.6))
+                        .tracking(2)
+                }
+            }
+            .padding(20)
+        }
+        .padding(.horizontal, 20)
+        .frame(width: 340)
+    }
 }
 
 #Preview {
-    HomeView()
-        .preferredColorScheme(.dark)
+    do {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: Recording.self, Incident.self, configurations: config)
+        return HomeView()
+            .modelContainer(container)
+            .preferredColorScheme(.dark)
+    } catch {
+        return Text("Preview Error: \(error.localizedDescription)")
+    }
 }

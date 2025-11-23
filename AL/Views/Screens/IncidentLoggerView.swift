@@ -1,9 +1,3 @@
-//
-//  IncidentLoggerView.swift
-//  AL
-//
-//  Created by Divyanshu Sharma on 11/20/25.
-//
 import SwiftUI
 import SwiftData
 
@@ -11,139 +5,122 @@ struct IncidentLoggerView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
-    // Form State
-    @State private var officerInfo = ""
+    // --- State Variables (Must match the Init call below) ---
+    @State private var title = ""
+    @State private var date = Date()
     @State private var location = ""
     @State private var notes = ""
-    @State private var timestamp = Date()
+    @State private var agency = ""
+    @State private var officerInfo = ""
     
     var body: some View {
         ZStack {
-            // Background
-            Color.black.ignoresSafeArea()
+            // 1. The Premium Animated Background
+            AuroraBackground()
             
             ScrollView {
                 VStack(spacing: 24) {
                     
-                    // 1. Header
-                    VStack(spacing: 8) {
-                        Image(systemName: "document.badge.plus")
-                            .font(.system(size: 48))
-                            .foregroundStyle(Color.green.gradient)
-                            .shadow(color: .green.opacity(0.4), radius: 15)
-                        
-                        Text("Log Incident")
-                            .font(.title2.bold())
-                            .engraved()
+                    // Header
+                    HStack {
+                        Button("Cancel") { dismiss() }
+                            .foregroundStyle(.red)
+                        Spacer()
+                        Text("New Incident")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Button("Save") { saveIncident() }
+                            .fontWeight(.bold)
+                            .foregroundStyle(.blue)
                     }
-                    .padding(.vertical, 20)
+                    .padding()
+                    .background(.ultraThinMaterial)
                     
-                    // 2. The Form Container
+                    // Form Fields Container
                     VStack(spacing: 20) {
                         
-                        // Date Time Picker (Styled)
-                        HStack {
-                            Image(systemName: "calendar")
-                                .foregroundStyle(.gray)
-                            Text("DATE & TIME")
-                                .font(.caption.bold())
-                                .foregroundStyle(.gray)
-                                .tracking(1)
-                            Spacer()
-                            DatePicker("", selection: $timestamp)
-                                .labelsHidden()
-                                .colorScheme(.dark) // Forces dark picker
+                        // Section 1: Basics
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("DETAILS")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white.opacity(0.6))
+                            
+                            GlassTextField(placeholder: "Title (e.g., Traffic Stop)", text: $title)
+                            
+                            DatePicker("Date & Time", selection: $date)
+                                .colorScheme(.dark) // Force dark picker
+                                .padding()
+                                .glass(cornerRadius: 12)
+                            
+                            GlassTextField(placeholder: "Location (e.g., I-95 Exit 4)", text: $location)
                         }
-                        .padding()
-                        .background(Color(white: 0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
                         
-                        // Inputs
-                        TacticalInput(
-                            title: "Officer Information",
-                            placeholder: "Badge #, Name, Car #",
-                            text: $officerInfo,
-                            icon: "person.text.rectangle.fill"
-                        )
+                        // Section 2: Officer & Agency
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("AUTHORITY")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white.opacity(0.6))
+                            
+                            GlassTextField(placeholder: "Agency (e.g., NYPD, TSA)", text: $agency)
+                            GlassTextField(placeholder: "Officer Name / Badge #", text: $officerInfo)
+                        }
                         
-                        TacticalInput(
-                            title: "Location",
-                            placeholder: "Street, Landmark, or GPS",
-                            text: $location,
-                            icon: "mappin.and.ellipse"
-                        )
-                        
-                        TacticalInput(
-                            title: "Narrative",
-                            placeholder: "Describe what happened...",
-                            text: $notes,
-                            icon: "note.text",
-                            isMultiLine: true
-                        )
-                        
-                        // Audio Attachment Placeholder (We will link this later)
-                        Button(action: {
-                            // TODO: Open Audio Picker
-                        }) {
-                            HStack {
-                                Image(systemName: "waveform")
-                                Text("Attach Audio Evidence")
-                                Spacer()
-                                Image(systemName: "plus.circle.fill")
-                            }
-                            .padding()
-                            .background(Color(white: 0.15))
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.blue.opacity(0.3), lineWidth: 1)
-                            )
-                            .foregroundStyle(.blue)
+                        // Section 3: Notes
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("NOTES")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white.opacity(0.6))
+                            
+                            TextEditor(text: $notes)
+                                .frame(height: 120)
+                                .scrollContentBackground(.hidden)
+                                .padding()
+                                .background(.ultraThinMaterial)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(.white.opacity(0.1), lineWidth: 1)
+                                )
+                                .foregroundStyle(.white)
                         }
                     }
-                    .padding(20)
-                    .background(Material.thin) // Glass background for form
-                    .clipShape(RoundedRectangle(cornerRadius: 30))
-                    .padding(.horizontal)
-                    
-                    // 3. Save Action
-                    Button(action: saveIncident) {
-                        Text("SAVE REPORT")
-                            .font(.headline)
-                            .tracking(2)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.green.gradient)
-                            .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .shadow(color: .green.opacity(0.4), radius: 10, y: 5)
-                    }
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 40)
+                    .padding()
                 }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
+        .navigationBarHidden(true)
     }
     
-    // Database Logic
+    // --- The Logic ---
     private func saveIncident() {
         let newIncident = Incident(
-            officerInfo: officerInfo,
-            location: location,
-            notes: notes
+            title: title.isEmpty ? "Untitled Incident" : title,
+            date: date,
+            location: location, // Correct Order: location is 3rd
+            notes: notes,       // notes is 4th
+            agency: agency,     // agency is 5th
+            officerInfo: officerInfo // officerInfo is 6th
         )
-        newIncident.timestamp = timestamp
         
-        // Save to SwiftData
         modelContext.insert(newIncident)
-        
-        // Provide Haptic Feedback
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
-        
-        dismiss() // Close screen
+        dismiss()
+    }
+}
+
+// Helper for nice Glass Text Fields
+struct GlassTextField: View {
+    let placeholder: String
+    @Binding var text: String
+    
+    var body: some View {
+        TextField("", text: $text, prompt: Text(placeholder).foregroundColor(.gray))
+            .foregroundStyle(.white)
+            .padding()
+            .glass(cornerRadius: 12)
     }
 }
 

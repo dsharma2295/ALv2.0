@@ -1,53 +1,66 @@
-//
-//  UserModels.swift
-//  AL
-//
-//  Created by Divyanshu Sharma on 11/20/25.
-//
 import Foundation
 import SwiftData
 
-// 1. An Incident Report
+// MARK: - Recording Model
 @Model
-final class Incident {
-    @Attribute(.unique) var id: String
-    var officerInfo: String
-    var location: String
-    var notes: String
+final class Recording {
+    var id: String
+    var filename: String
     var timestamp: Date
-    var lastEdited: Date?
+    var duration: TimeInterval
     
-    // Link to an audio recording (One-to-One)
-    @Relationship(deleteRule: .nullify) var recording: Recording?
+    // Relationship: One recording belongs to one incident (optional)
+    var incident: Incident?
     
-    init(officerInfo: String = "", location: String = "", notes: String = "", recording: Recording? = nil) {
+    var displayName: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return "Evidence \(formatter.string(from: timestamp))"
+    }
+    
+    init(filename: String, timestamp: Date = Date(), duration: TimeInterval) {
         self.id = UUID().uuidString
-        self.officerInfo = officerInfo
-        self.location = location
-        self.notes = notes
-        self.timestamp = Date()
-        self.recording = recording
+        self.filename = filename
+        self.timestamp = timestamp
+        self.duration = duration
     }
 }
 
-// 2. An Audio Recording
+// MARK: - Incident Model
 @Model
-final class Recording {
-    @Attribute(.unique) var id: String
-    var filename: String      // The file path on disk
-    var duration: TimeInterval
-    var timestamp: Date
-    var customName: String?   // User can rename it later
+final class Incident {
+    var id: String
+    var title: String
+    var date: Date
+    var location: String
+    var notes: String
+    var agency: String
+    var badges: [String]
     
-    init(filename: String, duration: TimeInterval) {
+    // --- NEW PROPERTIES (Fixed Build Errors) ---
+    var officerInfo: String // Was missing
+    var lastEdited: Date    // Was missing
+    
+    // Relationship: One incident has many recordings
+    @Relationship(deleteRule: .cascade, inverse: \Recording.incident)
+    var recordings: [Recording] = []
+    
+    init(title: String = "New Incident",
+         date: Date = Date(),
+         location: String = "",
+         notes: String = "",
+         agency: String = "General",
+         officerInfo: String = "") {
+        
         self.id = UUID().uuidString
-        self.filename = filename
-        self.duration = duration
-        self.timestamp = Date()
-    }
-    
-    // Helper to show a nice name
-    var displayName: String {
-        customName ?? timestamp.formatted(date: .abbreviated, time: .shortened)
+        self.title = title
+        self.date = date
+        self.location = location
+        self.notes = notes
+        self.agency = agency
+        self.officerInfo = officerInfo
+        self.badges = []
+        self.lastEdited = Date()
     }
 }

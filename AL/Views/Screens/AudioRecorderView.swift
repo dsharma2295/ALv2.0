@@ -10,7 +10,7 @@ struct AudioRecorderView: View {
     @Query(sort: \Recording.timestamp, order: .reverse) private var recordings: [Recording]
     
     // We keep the VM *only* for playback logic now, not for fetching
-    @StateObject private var viewModel = AudioRecorderViewModel()
+    @ObservedObject private var viewModel = AudioRecorderViewModel.shared
     
     var body: some View {
         ZStack {

@@ -1,22 +1,23 @@
-import Foundation
+import SwiftUI // <--- Crucial for Haptics & Animations
 import AVFoundation
-import SwiftData
-import SwiftUI
 import Combine
+import SwiftData
+// ... rest of the class
 
 @MainActor
 class AudioRecorderViewModel: NSObject, ObservableObject, AVAudioRecorderDelegate, AVAudioPlayerDelegate {
     
-    // --- State ---
-    @Published var isRecording = false
-    @Published var isPlaying = false
-    @Published var hasJustFinished = false
-    @Published var recordingTime: TimeInterval = 0
-    @Published var audioLevels: [CGFloat] = Array(repeating: 0.1, count: 30)
-    @Published var savedRecordings: [Recording] = [] // Kept for internal logic, though View uses @Query now
-    @Published var currentPlayingID: String? = nil
+    static let shared = AudioRecorderViewModel()
     
-    // --- Internals ---
+    @Published var isRecording = false
+    @Published var recordingTime: TimeInterval = 0
+    @Published var isPlaying = false
+    @Published var currentPlayingID: String?
+    @Published var hasJustFinished = false // <--- Added back for HomeView support
+    
+    // Audio Visualization
+    @Published var audioLevels: [CGFloat] = Array(repeating: 0.1, count: 20)
+    
     private var audioRecorder: AVAudioRecorder?
     private var audioPlayer: AVAudioPlayer?
     private var timer: Timer?
@@ -27,6 +28,7 @@ class AudioRecorderViewModel: NSObject, ObservableObject, AVAudioRecorderDelegat
         setupAudioSession()
     }
     
+    // Legacy support for HomeView
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
     }
@@ -34,18 +36,17 @@ class AudioRecorderViewModel: NSObject, ObservableObject, AVAudioRecorderDelegat
     private func setupAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+            // Fixed deprecated 'allowBluetooth'
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothA2DP, .allowAirPlay])
             try session.setActive(true)
         } catch {
             print("Failed to set up audio session: \(error)")
         }
     }
     
-    // --- Recording ---
     func startRecording() {
-        hasJustFinished = false
         let fileName = "evidence_\(Date().timeIntervalSince1970).m4a"
-        let path = getDocumentsDirectory().appendingPathComponent(fileName)
+        let path = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(fileName)
         
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
@@ -60,62 +61,50 @@ class AudioRecorderViewModel: NSObject, ObservableObject, AVAudioRecorderDelegat
             audioRecorder?.isMeteringEnabled = true
             audioRecorder?.record()
             
-            isRecording = true
+            withAnimation { isRecording = true }
             startTimer()
             
+            // Haptic Feedback
             let generator = UINotificationFeedbackGenerator()
+            generator.prepare()
             generator.notificationOccurred(.success)
-            print("Started recording to: \(path)")
             
         } catch {
             print("Could not start recording: \(error)")
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.error)
         }
     }
     
     func stopRecording() {
-        guard let recorder = audioRecorder else { return }
-        
-        let duration = recorder.currentTime
-        recorder.stop()
-        
-        isRecording = false
+        audioRecorder?.stop()
+        withAnimation { isRecording = false }
         stopTimer()
         
-        // Save to DB
-        saveRecordingToDB(filename: recorder.url.lastPathComponent, duration: duration)
+        // Signal that recording finished so HomeView can show alert
+        self.hasJustFinished = true
+        
+        // Save to SwiftData if context is available
+        if let context = modelContext, let url = audioRecorder?.url {
+            let newRecording = Recording(filename: url.lastPathComponent, timestamp: Date(), duration: recordingTime)
+            context.insert(newRecording)
+            try? context.save()
+        }
         
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.warning)
-        
-        withAnimation {
-            hasJustFinished = true
-        }
-        
-        audioRecorder = nil
     }
     
-    // --- Playback ---
+    // ... (Playback logic remains the same)
     func playRecording(_ recording: Recording) {
-        let path = getDocumentsDirectory().appendingPathComponent(recording.filename)
-        
-        // Verify file exists
-        if !FileManager.default.fileExists(atPath: path.path) {
-            print("Error: Audio file not found at \(path)")
-            return
-        }
-        
+        let path = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(recording.filename)
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: path)
             audioPlayer?.delegate = self
-            audioPlayer?.volume = 1.0
             audioPlayer?.play()
-            
             isPlaying = true
             currentPlayingID = recording.id
-            
-        } catch {
-            print("Playback failed: \(error)")
-        }
+        } catch { print("Playback failed") }
     }
     
     func stopPlayback() {
@@ -124,73 +113,37 @@ class AudioRecorderViewModel: NSObject, ObservableObject, AVAudioRecorderDelegat
         currentPlayingID = nil
     }
     
-    // --- Helpers ---
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        isPlaying = false
+        currentPlayingID = nil
+    }
+    
     private func startTimer() {
-        recordingTime = 0
-        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
             Task { @MainActor in
-                self.recordingTime += 0.1
-                self.updateAudioLevels()
-            }
-        }
-    }
-    
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-        recordingTime = 0
-        audioLevels = Array(repeating: 0.1, count: 30)
-    }
-    
-    private func updateAudioLevels() {
-        guard let recorder = audioRecorder else { return }
-        recorder.updateMeters()
-        let power = recorder.averagePower(forChannel: 0)
-        let normalized = normalizeSoundLevel(level: power)
-        
-        withAnimation(.linear(duration: 0.1)) {
-            if audioLevels.count > 0 {
-                audioLevels.removeFirst()
-                audioLevels.append(CGFloat(normalized))
+                if self.isRecording {
+                    self.recordingTime += 0.05
+                    self.audioRecorder?.updateMeters()
+                    let power = self.audioRecorder?.averagePower(forChannel: 0) ?? -160
+                    let level = self.normalizeSoundLevel(level: power)
+                    
+                    // Shift array for visualizer
+                    if self.audioLevels.count >= 20 { self.audioLevels.removeFirst() }
+                    self.audioLevels.append(CGFloat(level))
+                }
             }
         }
     }
     
     private func normalizeSoundLevel(level: Float) -> Float {
         let level = max(0.2, CGFloat(level) + 50) / 2
-        return Float(min(level, 20))
+        return Float(min(level, 25))
     }
     
-    private func getDocumentsDirectory() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    }
-    
-    // --- Database ---
-    private func saveRecordingToDB(filename: String, duration: TimeInterval) {
-        guard let context = modelContext else {
-            print("Error: ModelContext is nil, cannot save!")
-            return
-        }
-        
-        print("Saving recording: \(filename)")
-        let newRecording = Recording(filename: filename, duration: duration)
-        context.insert(newRecording)
-        
-        // Explicitly save to ensure persistence immediately
-        do {
-            try context.save()
-            print("Recording saved successfully.")
-        } catch {
-            print("Failed to save recording to DB: \(error)")
-        }
-    }
-    
-    func deleteRecording(_ recording: Recording) {
-        // Maintained for compatibility if used elsewhere
-        guard let context = modelContext else { return }
-        let path = getDocumentsDirectory().appendingPathComponent(recording.filename)
-        try? FileManager.default.removeItem(at: path)
-        context.delete(recording)
-        try? context.save()
+    private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+        recordingTime = 0
+        audioLevels = Array(repeating: 0.1, count: 20) // Reset visualizer
     }
 }

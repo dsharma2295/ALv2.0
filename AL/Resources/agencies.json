@@ -1,0 +1,325 @@
+[
+  {
+    "id": "cbp_airport",
+    "name": "Customs & Border Protection",
+    "shortName": "CBP",
+    "category": "Airport",
+    "description": "Enforcement at US Ports of Entry.",
+    "websiteURL": "https://www.cbp.gov/",
+    "about": "CBP protects the public from dangerous people and materials while enhancing the Nation's global economic competitiveness by enabling legitimate trade and travel.",
+    "canDo": [
+      {
+        "id": "cbp_search",
+        "title": "Search Without Warrant",
+        "summary": "Search you and your bags.",
+        "detail": "At ports of entry, CBP has broad authority to search persons, baggage, and merchandise without a warrant or probable cause.",
+        "legalBasis": "Border Search Exception; 19 U.S.C. § 1582",
+        "sourceURL": "https://www.cbp.gov/travel/cbp-search-authority",
+        "priority": "critical"
+      },
+      {
+        "id": "cbp_device",
+        "title": "Inspect Electronics",
+        "summary": "Turn on and inspect devices.",
+        "detail": "Officers can request you to unlock devices for manual inspection. A forensic search (downloading data) generally requires reasonable suspicion.",
+        "legalBasis": "CBP Directive 3340-049A",
+        "sourceURL": "https://www.cbp.gov/document/directives/cbp-directive-no-3340-049a-border-search-electronic-devices",
+        "priority": "important"
+      }
+    ],
+    "cannotDo": [
+      {
+        "id": "cbp_deny_citizen",
+        "title": "Deny Entry to Citizens",
+        "summary": "Citizens cannot be denied entry.",
+        "detail": "CBP cannot deny entry to U.S. citizens. They may delay you for verification, but you have an absolute right to return home.",
+        "legalBasis": "Kent v. Dulles; U.S. v. Arnold",
+        "sourceURL": "https://www.aclunc.org/our-work/know-your-rights/know-your-rights-us-airports-and-ports-entry",
+        "priority": "critical"
+      },
+      {
+        "id": "cbp_discriminate",
+        "title": "Discriminate",
+        "summary": "Profiling is illegal.",
+        "detail": "Officers cannot select you for personal searches or secondary inspection based solely on your religion, race, national origin, gender, or ethnicity.",
+        "legalBasis": "US DOJ Guidance 2014",
+        "sourceURL": "https://www.justice.gov/sites/default/files/ag/pages/attachments/2014/12/08/use-of-race-policy.pdf",
+        "priority": "critical"
+      }
+    ],
+    "rights": [
+      {
+        "id": "cbp_silence",
+        "title": "Right to Silence",
+        "summary": "Answer citizenship Qs only.",
+        "detail": "You have the right to remain silent. However, you must answer questions regarding your citizenship and customs declarations. Refusing other questions may cause delay.",
+        "legalBasis": "5th Amendment (Limited at Border)",
+        "sourceURL": "https://www.aclu.org/know-your-rights/border-zone",
+        "priority": "important"
+      },
+      {
+        "id": "cbp_attorney",
+        "title": "Attorney Access",
+        "summary": "Limited during inspection.",
+        "detail": "Generally, you do not have a right to a lawyer during primary or secondary inspection at the border, unlike in police custody.",
+        "legalBasis": "8 CFR § 292.5(b)",
+        "sourceURL": "https://www.ecfr.gov/current/title-8/chapter-I/subchapter-B/part-292/section-292.5",
+        "priority": "info"
+      }
+    ],
+    "quickPhrases": [
+      {
+        "id": "qp_cbp_1",
+        "situation": "Asked for phone password",
+        "phrase": "I do not consent to a search of my device. Am I legally required to unlock it?",
+        "explanation": "Checks obligation while maintaining privacy."
+      },
+      {
+        "id": "qp_cbp_2",
+        "situation": "Extended detention",
+        "phrase": "Am I being detained for a criminal matter, or is this a routine immigration inspection?",
+        "explanation": "Clarifies the nature of the stop."
+      }
+    ]
+  },
+  {
+    "id": "tsa_airport",
+    "name": "Transportation Security Admin",
+    "shortName": "TSA",
+    "category": "Airport",
+    "description": "Security screening for travelers.",
+    "websiteURL": "https://www.tsa.gov/",
+    "about": "TSA protects the nation's transportation systems to ensure freedom of movement for people and commerce.",
+    "canDo": [
+      {
+        "id": "tsa_screen",
+        "title": "Screen Everyone",
+        "summary": "Screening is mandatory to fly.",
+        "detail": "TSA is authorized to screen all passengers and property. If you refuse screening, you will be denied entry to the secure area and cannot fly.",
+        "legalBasis": "49 U.S.C. § 44901",
+        "sourceURL": "https://www.tsa.gov/travel/security-screening",
+        "priority": "critical"
+      }
+    ],
+    "cannotDo": [
+      {
+        "id": "tsa_strip",
+        "title": "Strip Search",
+        "summary": "TSA cannot strip search.",
+        "detail": "TSA officers are NOT law enforcement and are not authorized to conduct strip searches. If they suspect you are concealing something, they must call police.",
+        "legalBasis": "TSA Management Directive",
+        "sourceURL": "https://www.tsa.gov/travel/frequently-asked-questions",
+        "priority": "critical"
+      }
+    ],
+    "rights": [
+      {
+        "id": "tsa_optout",
+        "title": "Opt-Out of Scanner",
+        "summary": "Refuse the body scanner.",
+        "detail": "You have the right to opt out of the AIT (body scanner) and request a manual pat-down instead. You can also request this be done in private.",
+        "legalBasis": "TSA Civil Rights Policy",
+        "sourceURL": "https://www.tsa.gov/travel/security-screening",
+        "priority": "important"
+      }
+    ],
+    "quickPhrases": [
+      {
+        "id": "qp_tsa_1",
+        "situation": "Scanner request",
+        "phrase": "I opt out of the scanner. I request a manual pat-down.",
+        "explanation": "Standard phrase to initiate alternative screening."
+      }
+    ]
+  },
+  {
+    "id": "ice_airport",
+    "name": "Immigration & Customs Enforcement",
+    "shortName": "ICE",
+    "category": "Airport",
+    "description": "Immigration enforcement and removal.",
+    "websiteURL": "https://www.ice.gov/",
+    "about": "ICE enforces federal laws governing border control, customs, trade and immigration to promote homeland security and public safety.",
+    "canDo": [
+      {
+        "id": "ice_question",
+        "title": "Question Status",
+        "summary": "Ask about immigration status.",
+        "detail": "ICE agents can ask questions about your immigration status and request proof of lawful presence.",
+        "legalBasis": "8 U.S.C. § 1357(a)(1)",
+        "sourceURL": "https://www.aclu.org/know-your-rights/immigrants-rights",
+        "priority": "important"
+      },
+      {
+        "id": "ice_detain",
+        "title": "Detain for Removal",
+        "summary": "Detain if status invalid.",
+        "detail": "If they have probable cause to believe you are in the U.S. unlawfully, they can detain you for removal proceedings.",
+        "legalBasis": "8 U.S.C. § 1226",
+        "sourceURL": "https://www.ice.gov/detain",
+        "priority": "critical"
+      }
+    ],
+    "cannotDo": [
+      {
+        "id": "ice_private",
+        "title": "Enter Private Areas",
+        "summary": "Need judicial warrant.",
+        "detail": "ICE cannot enter private areas (like a home or private office) without a judicial warrant signed by a judge, or your consent.",
+        "legalBasis": "4th Amendment",
+        "sourceURL": "https://www.ilrc.org/red-cards",
+        "priority": "critical"
+      }
+    ],
+    "rights": [
+      {
+        "id": "ice_silence",
+        "title": "Right to Silence",
+        "summary": "You can remain silent.",
+        "detail": "You have the right to remain silent. You do not have to answer questions about where you were born or how you entered the U.S. (Unless at the border/customs control itself).",
+        "legalBasis": "5th Amendment",
+        "sourceURL": "https://www.aclu.org/know-your-rights/immigrants-rights",
+        "priority": "critical"
+      },
+      {
+        "id": "ice_lawyer",
+        "title": "Request Lawyer",
+        "summary": "Right to counsel (at your cost).",
+        "detail": "In administrative immigration proceedings, you have the right to a lawyer, but the government is not required to provide one for free.",
+        "legalBasis": "8 U.S.C. § 1362",
+        "sourceURL": "https://www.justice.gov/eoir/list-pro-bono-legal-service-providers",
+        "priority": "important"
+      }
+    ],
+    "quickPhrases": [
+      {
+        "id": "qp_ice_1",
+        "situation": "Approached by agent",
+        "phrase": "Am I free to go?",
+        "explanation": "Determines if you are being detained or if the encounter is consensual."
+      },
+      {
+        "id": "qp_ice_2",
+        "situation": "Questioning",
+        "phrase": "I choose to remain silent and I want to speak to a lawyer.",
+        "explanation": "Asserts 5th and 6th amendment rights immediately."
+      }
+    ]
+  },
+  {
+    "id": "hsi_airport",
+    "name": "Homeland Security Investigations",
+    "shortName": "HSI",
+    "category": "Airport",
+    "description": "Investigates cross-border criminal activity.",
+    "websiteURL": "https://www.ice.gov/about-ice/homeland-security-investigations",
+    "about": "HSI is the principal investigative arm of DHS, responsible for investigating transnational crime and threats.",
+    "canDo": [
+      {
+        "id": "hsi_investigate",
+        "title": "Criminal Investigation",
+        "summary": "Investigate smuggling/trafficking.",
+        "detail": "HSI agents investigate criminal activities like human trafficking, drug smuggling, and financial crimes. They have broad law enforcement powers.",
+        "legalBasis": "19 U.S.C. § 1589a",
+        "sourceURL": "https://www.ice.gov/about-ice/homeland-security-investigations",
+        "priority": "important"
+      }
+    ],
+    "cannotDo": [
+      {
+        "id": "hsi_coerce",
+        "title": "Coerce Confessions",
+        "summary": "Cannot force you to speak.",
+        "detail": "Like all law enforcement, HSI cannot force you to incriminate yourself or deny you legal counsel during a custodial interrogation.",
+        "legalBasis": "Miranda v. Arizona",
+        "sourceURL": "https://www.law.cornell.edu/wex/miranda_warning",
+        "priority": "critical"
+      }
+    ],
+    "rights": [
+      {
+        "id": "hsi_counsel",
+        "title": "Right to Attorney",
+        "summary": "Criminal defense rights apply.",
+        "detail": "If HSI is questioning you for a criminal matter, you have the full right to an attorney, including a public defender if you cannot afford one.",
+        "legalBasis": "6th Amendment",
+        "sourceURL": "https://www.aclu.org/know-your-rights/stopped-by-police",
+        "priority": "critical"
+      }
+    ],
+    "quickPhrases": [
+      {
+        "id": "qp_hsi_1",
+        "situation": "Asked to answer questions",
+        "phrase": "I do not wish to answer any questions without an attorney present.",
+        "explanation": "Halts interrogation legally."
+      }
+    ]
+  },
+  {
+    "id": "ma_state_police",
+    "name": "Massachusetts State Police",
+    "shortName": "MA State Police",
+    "category": "Traffic",
+    "description": "Traffic enforcement in Massachusetts.",
+    "websiteURL": "https://www.mass.gov/orgs/massachusetts-state-police",
+    "state": "Massachusetts",
+    "about": "The principal statewide law enforcement agency in the Commonwealth of Massachusetts.",
+    "canDo": [
+      {
+        "id": "ma_id",
+        "title": "Demand License",
+        "summary": "Must show license & registration.",
+        "detail": "Failure to produce license and registration upon request is a civil infraction or arrestable offense in MA.",
+        "legalBasis": "M.G.L. c. 90 § 25",
+        "sourceURL": "https://malegislature.gov/Laws/GeneralLaws/PartI/TitleXIV/Chapter90/Section25",
+        "priority": "critical"
+      },
+      {
+        "id": "ma_exit",
+        "title": "Order Exit",
+        "summary": "Can order you out of car.",
+        "detail": "Police can order a driver to exit the vehicle if they have a reasonable belief of a safety threat. You should comply physically but remain silent.",
+        "legalBasis": "Pennsylvania v. Mimms",
+        "sourceURL": "https://supreme.justia.com/cases/federal/us/434/106/",
+        "priority": "important"
+      }
+    ],
+    "cannotDo": [
+      {
+        "id": "ma_search",
+        "title": "Search Without Cause",
+        "summary": "No trunk search without warrant.",
+        "detail": "Police cannot search your trunk or vehicle interior without probable cause, your consent, or a warrant.",
+        "legalBasis": "Commonwealth v. Podgurski",
+        "sourceURL": "https://masscases.com/cases/sjc/386/386mass385.html",
+        "priority": "critical"
+      }
+    ],
+    "rights": [
+      {
+        "id": "ma_record",
+        "title": "Right to Record",
+        "summary": "Can record police in public.",
+        "detail": "You have a First Amendment right to openly record police officers performing duties in public spaces in MA.",
+        "legalBasis": "Glik v. Cunniffe",
+        "sourceURL": "https://www.aclu.org/cases/glik-v-cunniffe",
+        "priority": "important"
+      }
+    ],
+    "quickPhrases": [
+      {
+        "id": "qp_ma_1",
+        "situation": "Asked to search car",
+        "phrase": "I do not consent to any searches.",
+        "explanation": "Clearly establishes lack of consent for legal record."
+      },
+      {
+        "id": "qp_ma_2",
+        "situation": "Stopped",
+        "phrase": "Am I being detained or am I free to go?",
+        "explanation": "Clarifies legal status of the stop."
+      }
+    ]
+  }
+]
