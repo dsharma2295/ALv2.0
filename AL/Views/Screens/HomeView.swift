@@ -144,7 +144,7 @@ struct HomeHeaderView: View {
                     .foregroundStyle(.white.opacity(0.5))
                     .tracking(1)
                 
-                Text("AL")
+                Text("Dashboard")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
@@ -176,6 +176,8 @@ struct CarouselView: View {
                 Button(action: { tapAction(items[index]) }) {
                     HeroCard(item: items[index])
                 }
+                .buttonStyle(BouncyButtonStyle())
+                .frame(width: 340)
                 .tag(index)
             }
         }
@@ -256,53 +258,61 @@ struct BottomControlBar: View {
 struct RecordControlPill: View {
     @ObservedObject var audioVM: AudioRecorderViewModel
     let onRecordTap: () -> Void
-    @State private var pulse = false // Local state for pulsing animation
+    @State private var pulse = false
     
     var body: some View {
         HStack(spacing: 0) {
             // Record Action
             Button(action: onRecordTap) {
-                HStack {
+                HStack(alignment: .center) {
                     if audioVM.isRecording {
-                        // Active State: Waveform
-                        HStack(spacing: 3) {
-                            ForEach(0..<6, id: \.self) { index in
-                                let levelIndex = index % audioVM.audioLevels.count
-                                let height = audioVM.audioLevels[levelIndex] * 1.5 + 5
-                                
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(Color.white)
-                                    .frame(width: 4, height: height)
-                                    .animation(.easeInOut(duration: 0.1), value: height)
-                            }
-                        }
-                        .frame(width: 50)
+                        // --- ACTIVE STATE (Waveform Only) ---
+                        Spacer()
                         
-                        Text(formatDuration(audioVM.recordingTime))
-                            .font(.system(.headline, design: .monospaced))
-                            .foregroundStyle(.white)
-                            .frame(width: 60)
+                        VStack(spacing: 4) {
+                            // The Waveform
+                            HStack(spacing: 4) {
+                                ForEach(0..<6, id: \.self) { index in
+                                    let levelIndex = index % audioVM.audioLevels.count
+                                    let height = max(6, min(35, audioVM.audioLevels[levelIndex] * 2 + 8))
+                                    
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(Color.white)
+                                        .frame(width: 4, height: height)
+                                        .animation(.easeInOut(duration: 0.1), value: height)
+                                }
+                            }
+                            .frame(height: 30)
+                            
+                            // The Timer
+                            Text(formatDuration(audioVM.recordingTime))
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+                        
+                        Spacer()
                         
                     } else {
-                        // Idle State
+                        // --- IDLE STATE ---
                         Image(systemName: "mic.fill")
                             .font(.title2)
                             .foregroundStyle(.white)
-                            .padding(.leading, 14) // Adjusted padding
+                            .padding(.leading, 14)
                         
                         Text("Record")
                             .font(.system(.headline, design: .rounded))
                             .fontWeight(.bold)
                             .foregroundStyle(.white)
                             .padding(.leading, 4)
-                            .lineLimit(1)            // Fix: Prevent wrapping
-                            .minimumScaleFactor(0.8) // Fix: Allow slight shrink
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                            .layoutPriority(1)
+                        
+                        Spacer()
                     }
-                    Spacer()
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 72)
-                // FIX: Use AnyShapeStyle to handle mismatched types
                 .background(
                     audioVM.isRecording
                         ? AnyShapeStyle(Color.black.opacity(0.8))
@@ -335,10 +345,8 @@ struct RecordControlPill: View {
         }
         .clipShape(Capsule())
         .overlay(
-            Capsule()
-                .stroke(audioVM.isRecording ? Color.red : Color.white.opacity(0.15), lineWidth: 1)
+            Capsule().stroke(audioVM.isRecording ? Color.red : Color.white.opacity(0.15), lineWidth: 1)
         )
-        // Pulsating Ring Effect
         .overlay(
             Group {
                 if audioVM.isRecording {
@@ -364,7 +372,25 @@ struct RecordControlPill: View {
     }
 }
 
-// MARK: - Subcomponents (Data Models)
+struct WaveformView: View {
+    let levels: [CGFloat]
+    
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(0..<6, id: \.self) { index in
+                let levelIndex = index % levels.count
+                let height = max(4, min(25, levels[levelIndex] * 1.5 + 5))
+                
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.red)
+                    .frame(width: 3, height: height)
+                    .animation(.easeInOut(duration: 0.1), value: height)
+            }
+        }
+    }
+}
+
+// MARK: - Data Models
 
 struct CarouselItem: Identifiable, Hashable {
     enum ActionType { case navigate, sheet }
@@ -381,14 +407,11 @@ struct HeroCard: View {
     
     var body: some View {
         ZStack {
-            // Glass Background
             RoundedRectangle(cornerRadius: 40, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .shadow(color: .black.opacity(0.4), radius: 30, x: 0, y: 15)
             
-            // Content
             VStack(spacing: 30) {
-                // Floating Icon
                 ZStack {
                     Circle()
                         .fill(
@@ -413,7 +436,6 @@ struct HeroCard: View {
                         .shadow(color: item.color.opacity(0.5), radius: 15)
                 }
                 
-                // Text
                 VStack(spacing: 12) {
                     Text(item.title)
                         .font(.system(size: 32, weight: .heavy, design: .rounded))

@@ -22,7 +22,6 @@ struct AuroraBackground: View {
                 }
             }
             .overlay(
-                // Noise texture for that "premium" matte finish
                 Rectangle()
                     .fill(.white.opacity(0.02))
                     .blendMode(.overlay)
@@ -30,31 +29,52 @@ struct AuroraBackground: View {
     }
 }
 
-// MARK: - 2. The "Glass" Modifier (The Native Feel)
-// Replaces "MetallicSurface" with true iOS blurred glass
+// MARK: - 2. The "Glass" Modifier
 struct GlassModifier: ViewModifier {
     var cornerRadius: CGFloat
     
     func body(content: Content) -> some View {
         content
-            .background(.ultraThinMaterial) // The Magic: Native iOS Blur
+            .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10) // Soft Shadow
+            .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(.white.opacity(0.1), lineWidth: 1) // Subtle frost border
+                    .stroke(.white.opacity(0.1), lineWidth: 1)
             )
     }
 }
 
-// MARK: - 3. Typography & Button Styles
+// MARK: - 3. Bouncy Button Style (THIS FIXES YOUR ERROR)
+struct BouncyButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.94 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+    }
+}
+
+// MARK: - 4. Engraved Text Style
+struct EngravedTextStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .foregroundStyle(Color(white: 0.9))
+            .shadow(color: .black.opacity(0.8), radius: 1, x: 0, y: 1)
+    }
+}
+
+// MARK: - 5. Extensions
 extension View {
     func glass(cornerRadius: CGFloat = 24) -> some View {
         modifier(GlassModifier(cornerRadius: cornerRadius))
     }
     
+    // Backward compatibility alias
+    func metallic(cornerRadius: CGFloat = 24) -> some View {
+        modifier(GlassModifier(cornerRadius: cornerRadius))
+    }
+    
     func engraved() -> some View {
-        self.foregroundStyle(.white)
-            .shadow(color: .black.opacity(0.5), radius: 1, x: 0, y: 1)
+        modifier(EngravedTextStyle())
     }
 }
